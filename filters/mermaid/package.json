@@ -1,0 +1,9 @@
+{
+  "name": "mermaid-filter",
+  "version": "0.0.1",
+  "description": "deps",
+  "license": "MIT",
+  "dependencies": {
+    "mermaid": "^7.0.0"
+  }
+}

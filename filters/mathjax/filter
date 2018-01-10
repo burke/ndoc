@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+require 'open3'
+require 'uri'
+
+require_relative '../pandoc_filter'
+require_relative '../cache'
+
+module MathjaxFilter # :nodoc:
+  MATHJAX_NODE_CLI = File.expand_path('../mathjax-node-cli', __FILE__)
+
+  def self.run!
+    Pandoc.filter do |t, c, _, _|
+      filter_mathjax(c[1], inline: c[0]['t'] != 'DisplayMath') if t == 'Math'
+    end
+  end
+
+  def self.build_mathjax(tex)
+    o, s = Open3.capture2(MATHJAX_NODE_CLI, stdin_data: tex)
+    exit 1 unless s.success?
+    o
+  end
+
+  def self.filter_mathjax(tex, inline:)
+    Cache.fetch(tex + inline.inspect) do
+      svg = build_mathjax(tex)
+      Pandoc.RawInline('html', svg)
+    end
+  end
+end
+
+MathjaxFilter.run! if $PROGRAM_NAME == __FILE__

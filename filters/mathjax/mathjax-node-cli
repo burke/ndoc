@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+
+var mjAPI = require("mathjax-node");
+
+new Promise(resolve => {
+  var ret = '';
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('readable', () => {
+    let chunk;
+    while ((chunk = process.stdin.read())) { ret += chunk; }
+  });
+  process.stdin.on('end', () => { resolve(ret); });
+}).then(data => {
+  mjAPI.start();
+
+  mjAPI.typeset({
+    math: data,
+    format: (process.argv[1] == "--inline" ? "inline-TeX" : "TeX"),
+    format: 'TeX',
+    svg: true,
+    linebreaks: false,
+    speakText: false
+  }, data => {
+    if (!data.errors) { console.log(data.svg); }
+  });
+});

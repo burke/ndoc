@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+
+require 'open3'
+require_relative '../pandoc_filter'
+
+module DotFilter # :nodoc:
+  def self.run!
+    Pandoc.filter do |t, c, _, _|
+      filter_dot(c) if t == 'CodeBlock' && c[0][1].include?('dot')
+    end
+  end
+
+  GVPR_SCRIPT = File.expand_path('../diagram.gvpr', __FILE__)
+
+  def self.apply_gv(contents)
+    o, s = Open3.capture2('gvpr', '-c', '-f', GVPR_SCRIPT, stdin_data: contents)
+    exit 1 unless s.success?
+    o
+  end
+
+  def self.build_dot(contents)
+    o, s = Open3.capture2('dot', '-Tsvg', stdin_data: contents)
+    exit 1 unless s.success?
+    o
+  end
+
+  def self.pandoc_inline(svg_contents)
+    Pandoc.Para(
+      [
+        Pandoc.RawInline(
+          'html',
+          '<div class="svg">' + svg_contents.sub(/\A.*<svg/m, '<svg') + '</div>'
+        )
+      ]
+    )
+  end
+
+  def self.filter_dot(c)
+    dot = apply_gv(c[1])
+    svg = build_dot(dot)
+    pandoc_inline(svg)
+  end
+end
+
+DotFilter.run! if __FILE__ == $PROGRAM_NAME

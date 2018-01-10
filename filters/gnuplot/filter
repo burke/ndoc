@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+
+require 'open3'
+require_relative '../pandoc_filter'
+
+module GnuplotFilter # :nodoc:
+  def self.run!
+    Pandoc.filter do |t, c, _, _|
+      filter_dot(c) if t == 'CodeBlock' && c[0][1].include?('gnuplot')
+    end
+  end
+
+  def self.build_gnuplot(contents)
+    o, s = Open3.capture2('gnuplot', stdin_data: contents)
+    exit 1 unless s.success?
+    o
+  end
+
+  def self.pandoc_inline(svg_contents)
+    Pandoc.Para(
+      [
+        Pandoc.RawInline(
+          'html',
+          '<div class="svg">' + svg_contents.sub(/\A.*<svg/m, '<svg') + '</div>'
+        )
+      ]
+    )
+  end
+
+  def self.filter_dot(c)
+    gp = c[1]
+    svg = build_gnuplot(gp)
+    pandoc_inline(svg)
+  end
+end
+
+GnuplotFilter.run! if __FILE__ == $PROGRAM_NAME

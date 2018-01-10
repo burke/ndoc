@@ -1,0 +1,9 @@
+{
+  "name": "mathjax-filter",
+  "version": "0.0.1",
+  "description": "deps",
+  "license": "MIT",
+  "dependencies": {
+    "mathjax-node": "^1.1.0"
+  }
+}

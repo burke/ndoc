@@ -1,0 +1,80 @@
+# Default Styles
+
+BEG_G {
+  allDefault($G, "fontname", "helvetica");
+  allDefault($G, "fontsize", "10px");
+
+  nodeDefault($G, "style",     "rounded,filled");
+  nodeDefault($G, "shape",     "box");
+  nodeDefault($G, "fillcolor", "#cee1ff");
+  nodeDefault($G, "fontcolor", "#333333");
+}
+
+# Classes
+
+N [class($, "emph")] {
+  fillcolor = "#ffccff";
+  penwidth  = "3";
+}
+
+N [class($, "strong")] {
+  penwidth  = "3";
+}
+
+###########################################################
+
+BEGIN {
+  void graphDefault(graph_t g, string k, string v) {
+    setDflt(g, "G", k, v);
+  }
+
+  void edgeDefault(graph_t g, string k, string v) {
+    setDflt(g, "E", k, v);
+  }
+
+  void nodeDefault(graph_t g, string k, string v) {
+    setDflt(g, "N", k, v);
+  }
+
+  void allDefault(graph_t g, string k, string v) {
+    setDflt(g, "N", k, v);
+    setDflt(g, "E", k, v);
+    setDflt(g, "G", k, v);
+  }
+
+  int class(node_t n, string klass) {
+    int c = 0;
+    int hasClass = 0;
+    string newClasses = "";
+    string classes[int];
+
+    if (!hasAttr(n, "class")) return 0;
+    unset(classes);
+    tokens(aget(n, "class"), classes, ",");
+    for (classes[c]) {
+      if (classes[c] == klass) {
+        hasClass = 1;
+      }
+    }
+    if (!hasClass) return 0;
+
+    unset(classes);
+    tokens(aget(n, "class"), classes, ",");
+    for (classes[c]) {
+      if (classes[c] != klass) {
+        if (newClasses == "") {
+          newClasses = classes[c];
+        } else {
+          newClasses = sprintf("%s,%s", newClasses, classes[c]);
+        }
+      }
+    }
+    aset(n, "class", newClasses);
+    return 1;
+  }
+}
+
+N [hasAttr($, "class") && (aget($, "class") != "" && aget($, "class") != 0)] {
+  printf(2, "diagram.gvpr: unsupported class: %s\n", aget($, "class"));
+  exit(1);
+}

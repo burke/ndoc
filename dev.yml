@@ -1,0 +1,14 @@
+up:
+  - homebrew:
+      - pandoc
+      - entr
+      - phantomjs
+      - graphviz
+      - gnuplot
+  - ruby: 2.3.3
+  - node:
+      yarn: true
+      version: v8.1.4
+      packages:
+        - 'filters/mermaid'
+        - 'filters/mathjax'

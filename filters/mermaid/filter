@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+
+require 'open3'
+require 'uri'
+require 'tmpdir'
+
+require_relative '../pandoc_filter'
+require_relative '../cache'
+
+module MermaidFilter # :nodoc:
+  def self.run!
+    Pandoc.filter do |t, c, _, _|
+      filter_mermaid(c) if t == 'CodeBlock' && c[0][1].include?('diagram')
+    end
+  end
+
+  def self.build_mermaid(contents)
+    Dir.mktmpdir do |dir|
+      File.write("#{dir}/file", contents)
+
+      _, s = Open3.capture2(
+        'node_modules/.bin/mermaid',
+        '-e', '/usr/local/bin/phantomjs', '-s', '-o', dir,
+        "#{dir}/file"
+      )
+      exit 1 unless s.success?
+
+      return File.read("#{dir}/file.svg")
+    end
+  end
+
+  def self.pandoc_image(data_url)
+    Pandoc.Para(
+      [
+        Pandoc.Image(
+          ['', [], []],
+          [],
+          [data_url, '']
+        )
+      ]
+    )
+  end
+
+  def self.data_url(contents)
+    subbed = contents.tr('"', "'")
+    data = URI.escape(subbed, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))
+    'data:image/svg+xml,' + data
+  end
+
+  def self.filter_mermaid(c)
+    Cache.fetch(c.inspect) do
+      mermaid_text = c[1]
+      svg_contents = build_mermaid(mermaid_text)
+      url = data_url(svg_contents)
+      pandoc_image(url)
+    end
+  end
+end
+
+MermaidFilter.run! if __FILE__ == $PROGRAM_NAME

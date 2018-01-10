@@ -1,0 +1,55 @@
+#!/usr/bin/env ruby
+
+require 'fileutils'
+require 'open3'
+require 'yaml'
+require 'English'
+require 'optionparser'
+
+module NoteBuilder # :nodoc:
+  SELF = File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__
+  ROOT = File.expand_path('../../', SELF)
+
+  PANDOC = ['pandoc', '--smart', '--verbose'].freeze
+
+  FILTERS = [
+    '--filter', "#{ROOT}/filters/mathjax/filter",
+    '--filter', "#{ROOT}/filters/mermaid/filter",
+    '--filter', "#{ROOT}/filters/dot/filter",
+    '--filter', "#{ROOT}/filters/gnuplot/filter"
+  ].freeze
+
+  FORMAT = [
+    '--from', 'markdown+footnotes+citations',
+    '--to',   'html5'
+  ].freeze
+
+  TOC = ['--toc', '--toc-depth', '4'].freeze
+
+  DEFAULT_TEMPLATE = "#{ROOT}/templates/default.html".freeze
+
+  def self.main(*argv)
+    template = DEFAULT_TEMPLATE
+    OptionParser.new do |o|
+      o.on('-t', '--template [PATH]', 'pandoc template', default: DEFAULT_TEMPLATE) do |v|
+        template = File.expand_path(v)
+      end
+      o.on_tail('-h', '--help', 'Show this message') do
+        puts o
+        puts
+        puts 'ndoc consumes markdown from STDIN and emits HTML to STDOUT.'
+        puts "The default template is #{DEFAULT_TEMPLATE}"
+        exit
+      end
+    end.parse(argv)
+    exec_pandoc(template)
+  end
+
+  def self.exec_pandoc(template)
+    Dir.chdir(ROOT) do
+      exec(*PANDOC, *TOC, *FORMAT, *FILTERS, '--template', template)
+    end
+  end
+end
+
+NoteBuilder.main(*ARGV) if $PROGRAM_NAME == __FILE__
