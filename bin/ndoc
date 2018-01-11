@@ -31,7 +31,7 @@ module NoteBuilder # :nodoc:
   def self.main(*argv)
     template = DEFAULT_TEMPLATE
     OptionParser.new do |o|
-      o.on('-t', '--template [PATH]', 'pandoc template', default: DEFAULT_TEMPLATE) do |v|
+      o.on('-t', '--template PATH', String, 'pandoc template') do |v|
         template = File.expand_path(v)
       end
       o.on_tail('-h', '--help', 'Show this message') do
