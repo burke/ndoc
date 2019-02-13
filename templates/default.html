@@ -11,6 +11,7 @@ $endif$
 $if(keywords)$
   <meta name="keywords" content="$for(keywords)$$keywords$$sep$, $endfor$">
 $endif$
+  <link rel="icon" href="data:;base64,=">
   <title>$if(title-prefix)$$title-prefix$ – $endif$$pagetitle$</title>
 </head>
 <style type="text/css">
@@ -33,7 +34,7 @@ body {
   background: #fefefe;
 }
 
-section {
+section:not(.footnotes) {
   background-color: #f5f5f5;
   border: 1px solid #333;
   color: #555;
